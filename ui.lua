@@ -1,20 +1,23 @@
 -- ==============================================================================
--- MXDCMPX ADVANCED USER INTERFACE COMPONENT
+-- MXDCMPX ADVANCED USER INTERFACE COMPONENT (BULLETPROOF EDITION)
 -- ==============================================================================
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 
+-- Safely get the target UI parent (Supports modern gethui() if available)
+local TargetParent = (gethui and gethui()) or CoreGui
+
 local UI = {}
 
 function UI.Init(OnConfigurationSaved)
     -- Prevent UI Layer Stacking
-    if CoreGui:FindFirstChild("MXD_Framework_Canvas") then
-        CoreGui.MXD_Framework_Canvas:Destroy()
+    if TargetParent:FindFirstChild("MXD_Framework_Canvas") then
+        TargetParent.MXD_Framework_Canvas:Destroy()
     end
-    if CoreGui:FindFirstChild("MXD_Loading_Canvas") then
-        CoreGui.MXD_Loading_Canvas:Destroy()
+    if TargetParent:FindFirstChild("MXD_Loading_Canvas") then
+        TargetParent.MXD_Loading_Canvas:Destroy()
     end
 
     -- ==========================================================================
@@ -24,7 +27,7 @@ function UI.Init(OnConfigurationSaved)
     LoadingCanvas.Name = "MXD_Loading_Canvas"
     LoadingCanvas.DisplayOrder = 999
     LoadingCanvas.ResetOnSpawn = false
-    LoadingCanvas.Parent = CoreGui
+    LoadingCanvas.Parent = TargetParent
 
     local LoadingBackground = Instance.new("Frame")
     LoadingBackground.Name = "LoadingBackground"
@@ -41,7 +44,7 @@ function UI.Init(OnConfigurationSaved)
     LoadingText.BackgroundTransparency = 1
     LoadingText.Text = "MXDCMPX"
     LoadingText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    LoadingText.Font = Enum.Font.BuilderSansExtraBold
+    LoadingText.Font = Enum.Font.GothamBlack
     LoadingText.TextSize = 28
     LoadingText.TextLetterSpacing = 3
     LoadingText.TextTransparency = 1
@@ -49,6 +52,16 @@ function UI.Init(OnConfigurationSaved)
 
     -- Smoothly reveal loading display
     TweenService:Create(LoadingText, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
+
+    -- FAILSAFE: If the script crashes below this point, this destroys the black screen after 4 seconds
+    task.spawn(function()
+        task.wait(4)
+        if LoadingCanvas and LoadingCanvas.Parent then
+            LoadingCanvas:Destroy()
+            warn("[MXD FAILSAFE] The UI script crashed! Press F9 to see the exact error.")
+        end
+    end)
+
     task.wait(1.2)
 
     -- ==========================================================================
@@ -59,7 +72,7 @@ function UI.Init(OnConfigurationSaved)
     MainCanvas.DisplayOrder = 100
     MainCanvas.ResetOnSpawn = false
     MainCanvas.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    MainCanvas.Parent = CoreGui
+    MainCanvas.Parent = TargetParent
 
     -- Main Panel Container (Fixed Compact Proportions)
     local MainFrame = Instance.new("Frame")
@@ -120,7 +133,8 @@ function UI.Init(OnConfigurationSaved)
     UsernameLabel.Size = UDim2.new(0, 0, 1, 0)
     UsernameLabel.AutomaticSize = Enum.AutomaticSize.X
     UsernameLabel.BackgroundTransparency = 1
-    UsernameLabel.Text = Players.LocalPlayer.Name
+    -- Safe Player Name Fetch
+    UsernameLabel.Text = Players.LocalPlayer and Players.LocalPlayer.Name or "SystemUser"
     UsernameLabel.TextColor3 = Color3.fromRGB(180, 180, 185)
     UsernameLabel.Font = Enum.Font.GothamMedium
     UsernameLabel.TextSize = 13
@@ -173,7 +187,7 @@ function UI.Init(OnConfigurationSaved)
         IconBtn.Name = IconName .. "Icon"
         IconBtn.Size = UDim2.new(0, 16, 0, 16)
         IconBtn.BackgroundTransparency = 1
-        IconBtn.Image = "rbxassetid://10734950309" -- Modular fallback high-res utility asset asset map
+        IconBtn.Image = "rbxassetid://10734950309"
         IconBtn.ImageColor3 = (IconName == "Home") and Color3.fromRGB(240, 240, 245) or Color3.fromRGB(110, 110, 115)
         IconBtn.Parent = NavIconContainer
     end
@@ -201,7 +215,7 @@ function UI.Init(OnConfigurationSaved)
     ClockLabel.TextSize = 11
     ClockLabel.Parent = ClockFrame
 
-    -- Standardized Utility Control Panel System (Window Management)
+    -- Window Controls
     local WindowControls = Instance.new("Frame")
     WindowControls.Name = "WindowControls"
     WindowControls.Size = UDim2.new(0, 70, 1, 0)
@@ -312,25 +326,22 @@ function UI.Init(OnConfigurationSaved)
         return PageFrame
     end
 
-    -- Constructing Target Context Canvas Elements
     local HomePage = GenerateStructuralPage("Home")
     local AnnouncementsPage = GenerateStructuralPage("Announcements")
     local PlayersPage = GenerateStructuralPage("Players")
     local CommandsPage = GenerateStructuralPage("Commands")
 
-    -- Clean Modern Elements for Home Content Initialization
     local WelcomeTitle = Instance.new("TextLabel")
     WelcomeTitle.Name = "WelcomeTitle"
     WelcomeTitle.Size = UDim2.new(1, 0, 0, 24)
     WelcomeTitle.BackgroundTransparency = 1
     WelcomeTitle.Text = "System Control Framework Active"
     WelcomeTitle.TextColor3 = Color3.fromRGB(240, 240, 245)
-    WelcomeTitle.Font = Enum.Font.GothamMedium
+    WelcomeTitle.Font = Enum.Font.GothamBold
     WelcomeTitle.TextSize = 16
     WelcomeTitle.TextXAlignment = Enum.TextXAlignment.Left
     WelcomeTitle.Parent = HomePage
 
-    -- Content Elements for Players Context Frame Setup
     local ServerSearchBox = Instance.new("TextBox")
     ServerSearchBox.Name = "ServerSearchBox"
     ServerSearchBox.Size = UDim2.new(0, 240, 0, 32)
@@ -340,7 +351,7 @@ function UI.Init(OnConfigurationSaved)
     ServerSearchBox.PlaceholderText = "Search in Server..."
     ServerSearchBox.PlaceholderColor3 = Color3.fromRGB(80, 80, 85)
     ServerSearchBox.TextColor3 = Color3.fromRGB(220, 220, 225)
-    ServerSearchBox.Font = Enum.Font.BuilderSans
+    ServerSearchBox.Font = Enum.Font.Gotham
     ServerSearchBox.TextSize = 12
     ServerSearchBox.Parent = PlayersPage
 
@@ -353,7 +364,6 @@ function UI.Init(OnConfigurationSaved)
     SearchBoxStroke.Thickness = 1
     SearchBoxStroke.Parent = ServerSearchBox
 
-    -- Core Execution Frame Pipeline
     local function TransitionPageContext(TargetName)
         for PageName, Frame in pairs(StructuralPages) do
             if PageName == TargetName then
@@ -364,7 +374,6 @@ function UI.Init(OnConfigurationSaved)
         end
     end
 
-    -- Generation Functional Logic For Sidebar Links Interface Elements
     local function ConstructTabItem(Name, Order)
         local ButtonFrame = Instance.new("Frame")
         ButtonFrame.Name = Name .. "_Tab"
@@ -390,27 +399,12 @@ function UI.Init(OnConfigurationSaved)
         ButtonLabel.Size = UDim2.new(1, 0, 1, 0)
         ButtonLabel.Position = UDim2.new(0, 10, 0, 0)
         ButtonLabel.BackgroundTransparency = 1
-        -- Clean, legible font replacement to prevent old cursive style layout issues
         ButtonLabel.Text = Name
         ButtonLabel.TextColor3 = Color3.fromRGB(130, 130, 135)
-        ButtonLabel.Font = Enum.Font.BuilderSansMedium
+        ButtonLabel.Font = Enum.Font.GothamMedium
         ButtonLabel.TextSize = 13
         ButtonLabel.TextXAlignment = Enum.TextXAlignment.Left
         ButtonLabel.Parent = ButtonFrame
-
-        -- Functional Verification Routine Linkage Setup
-        local function SetSelectStatus(Selected)
-            if Selected then
-                ButtonFrame.BackgroundTransparency = 0
-                ButtonFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 26)
-                ButtonLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-                ButtonLabel.Font = Enum.Font.BuilderSansBold
-            else
-                ButtonFrame.BackgroundTransparency = 1
-                ButtonLabel.TextColor3 = Color3.fromRGB(130, 130, 135)
-                ButtonLabel.Font = Enum.Font.BuilderSansMedium
-            end
-        end
 
         TargetClickButton.MouseEnter:Connect(function()
             if ActiveTabTracker ~= Name then
@@ -427,18 +421,17 @@ function UI.Init(OnConfigurationSaved)
         TargetClickButton.MouseButton1Click:Connect(function()
             if ActiveTabTracker == Name then return end
             
-            -- Cycle configuration nodes state context values
             for _, Element in ipairs(TabButtonsContainer:GetChildren()) do
                 if Element:IsA("Frame") then
                     if Element.Name == Name .. "_Tab" then
                         Element.BackgroundTransparency = 0
                         Element.BackgroundColor3 = Color3.fromRGB(22, 22, 26)
                         Element.Label.TextColor3 = Color3.fromRGB(255, 255, 255)
-                        Element.Label.Font = Enum.Font.BuilderSansBold
+                        Element.Label.Font = Enum.Font.GothamBold
                     else
                         Element.BackgroundTransparency = 1
                         Element.Label.TextColor3 = Color3.fromRGB(130, 130, 135)
-                        Element.Label.Font = Enum.Font.BuilderSansMedium
+                        Element.Label.Font = Enum.Font.GothamMedium
                     end
                 end
             end
@@ -450,19 +443,17 @@ function UI.Init(OnConfigurationSaved)
         return ButtonFrame
     end
 
-    -- Mount Menu Tabs List Configuration Items 
     local HomeTab = ConstructTabItem("Home", 1)
     local AnnouncementsTab = ConstructTabItem("Announcements", 2)
     local PlayersTab = ConstructTabItem("Players", 3)
     local CommandsTab = ConstructTabItem("Commands", 4)
 
-    -- Force default landing selection setup configuration rules profile layout system
     ActiveTabTracker = "Home"
     TransitionPageContext("Home")
     HomeTab.BackgroundTransparency = 0
     HomeTab.BackgroundColor3 = Color3.fromRGB(22, 22, 26)
     HomeTab.Label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    HomeTab.Label.Font = Enum.Font.BuilderSansBold
+    HomeTab.Label.Font = Enum.Font.GothamBold
 
     -- ==========================================================================
     -- PHASE 6: COMPONENT ARCHITECTURE - MODAL POPUP DIALOG WINDOW SYSTEM
@@ -503,7 +494,6 @@ function UI.Init(OnConfigurationSaved)
     ModalClose.ImageColor3 = Color3.fromRGB(140, 140, 145)
     ModalClose.Parent = ModalPopup
 
-    -- Operational verification action system mapping functions hooks
     local function ToggleModalState(VisibleState)
         if VisibleState then
             ModalOverlay.Visible = true
@@ -520,7 +510,6 @@ function UI.Init(OnConfigurationSaved)
         ToggleModalState(false)
     end)
 
-    -- Bind Option Menu Dots Icon Button Trigger to open Modal Menu View
     ControlDots.MouseButton1Click:Connect(function()
         ToggleModalState(not ModalOverlay.Visible)
     end)
@@ -566,7 +555,6 @@ function UI.Init(OnConfigurationSaved)
         end
     end)
 
-    -- System Clock Run Loop Thread Logic
     task.spawn(function()
         while task.wait(1) do
             if not MainCanvas.Parent then break end
@@ -574,7 +562,6 @@ function UI.Init(OnConfigurationSaved)
         end
     end)
 
-    -- Framework Destructor Execution Window Mapping Hook Action Control
     ControlClose.MouseButton1Click:Connect(function()
         MainCanvas:Destroy()
     end)
@@ -582,15 +569,15 @@ function UI.Init(OnConfigurationSaved)
     -- ==========================================================================
     -- PHASE 8: HANDSHAKE LIFECYCLE DEPLOYMENT SWITCH TERMINATION
     -- ==========================================================================
-    -- Destroy loading elements safely to prevent stuck UI errors
     TweenService:Create(LoadingBackground, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1}):Play()
     TweenService:Create(LoadingText, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1}):Play()
     
     task.delay(0.4, function()
-        LoadingCanvas:Destroy()
+        if LoadingCanvas and LoadingCanvas.Parent then
+            LoadingCanvas:Destroy()
+        end
     end)
 
-    -- Callback to engine verification pipeline components connection module layout
     if OnConfigurationSaved then
         OnConfigurationSaved({ InterfaceTheme = "DarkCarbon", CompiledBuild = 2026 })
     end
