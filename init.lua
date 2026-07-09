@@ -1,12 +1,12 @@
 -- init.lua
-local BaseURL = "https://raw.githubusercontent.com/MaxyChanKittenhh/MxDcmpX/main/"
+local BaseURL = "https://raw.githubusercontent.com/MaxyChanKittenhh/MxDcmp-Project/main/"
+local CacheBust = "?t=" .. tostring(os.time())
 
--- 1. Load the Engine and UI modules directly from your GitHub
-local Engine = loadstring(game:HttpGet(BaseURL .. "engine.lua"))()
-local UI = loadstring(game:HttpGet(BaseURL .. "ui.lua"))()
+-- Fetching modules with forced cache-bypass
+local Engine = loadstring(game:HttpGet(BaseURL .. "engine.lua" .. CacheBust))()
+local UI = loadstring(game:HttpGet(BaseURL .. "ui.lua" .. CacheBust))()
 
--- 2. Initialize the UI and pass the Engine's Save function to it
--- (The UI will handle the configuration toggles and call this when "Start" is clicked)
+-- Initialize framework linkage
 UI.Init(function(CurrentConfig)
     Engine.Save(CurrentConfig)
 end)
