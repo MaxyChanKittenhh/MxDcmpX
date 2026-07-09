@@ -1,5 +1,5 @@
--- init.lua
-local BaseURL = "https://raw.githubusercontent.com/MaxyChanKittenhh/MxDcmp-Project/main/"
+-- We changed 'MxDcmp-Project' to 'MxDcmpX' right here:
+local BaseURL = "https://raw.githubusercontent.com/MaxyChanKittenhh/MxDcmpX/main/"
 local CacheBust = "?t=" .. tostring(os.time())
 
 -- Fetching modules with forced cache-bypass
