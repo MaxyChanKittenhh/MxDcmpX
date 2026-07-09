@@ -1,5 +1,5 @@
 -- init.lua
-local BaseURL = "https://raw.githubusercontent.com/YOUR_USERNAME/MxDcmpX/main/"
+local BaseURL = "https://raw.githubusercontent.com/MaxyChanKittenhh/MxDcmpX/main/"
 
 -- 1. Load the Engine and UI modules directly from your GitHub
 local Engine = loadstring(game:HttpGet(BaseURL .. "engine.lua"))()
